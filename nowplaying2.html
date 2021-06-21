@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            background-color: rgba(0, 0, 0, 0);
+            margin: 0 auto;
+        }
+        #container {
+            background: rgba(0, 0, 0, .8);
+            border-radius: 15px;
+            height: 99.99vh;
+            width: 99.99vw;
+            display: flex;
+        }
+        #cover {
+            border-radius: 15px 0 0 15px;
+            height: 100%;
+            margin-right: 4%;
+            width: auto;
+            background: url("https://developer.spotify.com/assets/branding-guidelines/icon4@2x.png") no-repeat;
+            background-size: cover;
+        }
+        #text {
+            display: flex;
+            align-self: center;
+            color: #fff;
+            flex-flow: column nowrap;
+            font-family: "Lato", sans-serif;
+            margin-right: 4%;
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        #track {
+            height: 4rem;
+            font-size: 3rem;
+            font-weight: 700;
+            
+        }
+        #artist {
+            margin-top: 3%;
+            height: 3rem;
+            font-size: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <img id="cover" src="Snip_Artwork.jpg" />
+        <div id="text">
+            <div id="track"></div>
+            <div id="artist"></div>
+        </div>
+    </container>
+    <script src="https://unpkg.com/jquery"></script>
+    <script>
+        var currentTrack = '';
+        var currentArtist = '';
+
+        var elementTrack = document.getElementById('track');
+        var elementArtist = document.getElementById('artist');
+        var elementCover = document.getElementById("cover");
+
+        function isElementOverflowing(element) {
+            var overflowX = element.offsetWidth < element.scrollWidth,
+                overflowY = element.offsetHeight < element.scrollHeight;
+
+            console.log(`element.offsetWidth: ${element.offsetWidth}`);
+            console.log(`element.scrollWidth: ${element.scrollWidth}`);
+            console.log(`element.offsetHeight: ${element.offsetHeight}`);
+            console.log(`element.scrollHeight: ${element.scrollHeight}`);
+            return (overflowX || overflowY);
+        }
+
+        function wrapContentsInMarquee(element) {
+            var marquee = document.createElement('marquee'),
+                contents = element.innerText;
+
+            marquee.innerText = contents;
+            element.innerHTML = '';
+            element.appendChild(marquee);
+        }
+
+        /**
+         * @param {string} oldText
+         * @param {string} newText
+         * @param {HTMLElement} element
+         */
+        function checkOverFlowText(oldText, newText, element) {
+            if (oldText === newText) {
+                return;
+            }
+            else {
+                if (isElementOverflowing(element)) {
+                    wrapContentsInMarquee(element);
+                }
+            }
+        }
+
+        /**
+         * when user OBS is fine
+         */
+        async function getFile(PathFile) {
+            try {
+                const initTrack = new Promise(function (reslove, reject) {
+                    try {
+                        $.get(PathFile, function (resultData) {
+                            reslove(resultData);
+                        });
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+                return await initTrack.then(r => String(r));
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        async function getTrack() {
+            return await getFile("Snip_Track.txt");
+        }
+
+        /**
+         * @param {string} trackData
+         */
+        async function setTrack(trackData) {
+            const getCurrentTrack = currentTrack;
+            const getNewTrack = trackData.replace(/^\“/g, '').replace(/\”$/g, '').replace(/\s/g, ' ');
+            console.log(`newTrack:[${getNewTrack}]`);
+            if (getNewTrack.replace(/\s/g, '') === '') {
+                currentTrack = "Paused ...";
+                elementTrack.innerText = currentTrack;
+                return;
+            }
+            else {
+                if (getCurrentTrack !== getNewTrack) {
+                    currentTrack = getNewTrack;
+                    elementTrack.innerText = currentTrack;
+                    setTimeout(() => {
+                        if (isElementOverflowing(elementTrack)) wrapContentsInMarquee(elementTrack);
+                        isElementOverflowing(elementTrack);
+                    }, 1000);
+                    return;
+                }
+            }
+        }
+
+        async function getArtist() {
+            return await getFile("Snip_Artist.txt");
+        }
+
+        async function setArtist(artistData) {
+            const getCurrentArtist = currentArtist;
+            const getNewArtist = artistData.replace(/^\“/g, '').replace(/\”$/g, '').replace(/\s/g, ' ');
+            if (getNewArtist.replace(/\s/g, '') === '') {
+                currentArtist = "";
+                elementArtist.innerText = currentArtist;
+            }
+            else {
+                if (getCurrentArtist !== getNewArtist) {
+                    currentArtist = getNewArtist;
+                    elementArtist.innerText = currentArtist;
+                    setTimeout(() => {
+                        if (isElementOverflowing(elementArtist)) wrapContentsInMarquee(elementArtist);
+                    }, 1000);
+                    return;
+                }
+            }
+        }
+
+        function setArtwork() {
+            const randomDateTime = new Date().valueOf();
+            elementCover.src = 'Snip_Artwork.jpg?time=' + randomDateTime;
+        }
+
+        setInterval(function () {
+            getTrack().then(r => setTrack(r));
+            getArtist().then(r => setArtist(r));
+            setArtwork();
+        }, 1000);
+    </script>
+</body>
+</html>
